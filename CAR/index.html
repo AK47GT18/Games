@@ -950,8 +950,42 @@ function createObstacleRowAt(z) {
             checkOrientation();
         });
         
-        // Start the game
-        init();
+        // --- Swipe gesture support for mobile ---
+let touchStartX = null;
+let touchStartY = null;
+
+function setupSwipeControls() {
+    window.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+    });
+
+    window.addEventListener('touchend', function(e) {
+        if (touchStartX === null || touchStartY === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
+            // Horizontal swipe
+            if (dx > 0 && currentLaneIndex < GAME_CONSTANTS.LANES.length - 1) {
+                currentLaneIndex++;
+                targetLane = GAME_CONSTANTS.LANES[currentLaneIndex];
+            } else if (dx < 0 && currentLaneIndex > 0) {
+                currentLaneIndex--;
+                targetLane = GAME_CONSTANTS.LANES[currentLaneIndex];
+            }
+        }
+        touchStartX = null;
+        touchStartY = null;
+    });
+}
+
+// Call this in your init() function:
+setupSwipeControls();
+
+// Start the game
+init();
     </script>
 
     <!-- Music placeholder (add your song file to src) -->
