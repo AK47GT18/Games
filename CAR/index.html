@@ -183,9 +183,24 @@
             z-index: 100;
         }
 
-        @media screen and (max-width: 600px) {
-    .minimap, .speedometer {
+   @media screen and (max-width: 600px), (orientation: portrait) {
+    #gameContainer {
+        width: 100vw;
+        height: 100vh;
+        min-width: 100vw;
+        min-height: 100vh;
+    }
+    #ui, #weatherInfo {
+        font-size: 16px;
+    }
+    .speedometer, .minimap {
         display: none !important;
+    }
+    #pauseBtn {
+        bottom: 20px !important;
+        right: 20px !important;
+        top: auto !important;
+        left: auto !important;
     }
 }
     </style>
@@ -226,10 +241,11 @@
         </div>
 
         <!-- Add this pause button -->
-<button id="pauseBtn" style="position:absolute;top:15px;right:60px;z-index:101;font-size:20px;padding:10px 18px;border-radius:50%;border:none;background:rgba(0,0,0,0.7);color:white;">⏸️</button>
+<button id="pauseBtn" style="position:fixed;bottom:20px;right:20px;z-index:101;font-size:24px;padding:18px 22px;border-radius:50%;border:none;background:rgba(0,0,0,0.7);color:white;">⏸️</button>
     </div>
 
     <script>
+        let paused = false;
         // Update GAME_CONSTANTS for better speed feel and colors
 const GAME_CONSTANTS = {
     LANES: [-3, 0, 3],
@@ -278,10 +294,6 @@ const GAME_CONSTANTS = {
         let currentLaneIndex = 1; // Start in middle lane for 3 lanes
 
         function init() {
-            // Check orientation on mobile
-            checkOrientation();
-            window.addEventListener('orientationchange', checkOrientation);
-            window.addEventListener('resize', checkOrientation);
             
             // Create scene
             scene = new THREE.Scene();
@@ -320,14 +332,6 @@ const GAME_CONSTANTS = {
             animate();
         }
         
-        function checkOrientation() {
-            const rotateMessage = document.getElementById('rotateMessage');
-            if (window.innerWidth < window.innerHeight && window.innerWidth < 768) {
-                rotateMessage.style.display = 'flex';
-            } else {
-                rotateMessage.style.display = 'none';
-            }
-        }
         
         function createLighting() {
             // Ambient light
@@ -580,75 +584,23 @@ const GAME_CONSTANTS = {
             };
         }
         
-        function setupControls() {
+                function setupControls() {
             document.addEventListener('keydown', (e) => keys[e.code] = true);
             document.addEventListener('keyup', (e) => keys[e.code] = false);
-            
-            // Mobile controls
-            ['leftBtn', 'rightBtn', 'accelerateBtn', 'brakeBtn'].forEach(id => {
-                const btn = document.getElementById(id);
-                btn.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    touches[id] = true;
-                });
-                btn.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    touches[id] = false;
-                });
-            });
-            
-            document.getElementById('hornBtn').addEventListener('click', () => {
-                if (hornSound) hornSound();
-            });
-            
-            document.getElementById('restartBtn').addEventListener('click', restartGame);
-        }
         
-        // --- Swipe gesture support for mobile ---
-let touchStartX = null;
-let touchStartY = null;
-let paused = false;
+            document.getElementById('restartBtn').addEventListener('click', restartGame);
+        } 
 
-function setupSwipeControls() {
-    window.addEventListener('touchstart', function(e) {
-        if (e.touches.length === 1) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        }
-    });
-
-    window.addEventListener('touchend', function(e) {
-        if (touchStartX === null || touchStartY === null) return;
-        const dx = e.changedTouches[0].clientX - touchStartX;
-        const dy = e.changedTouches[0].clientY - touchStartY;
-        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
-            // Horizontal swipe
-            if (dx > 0 && currentLaneIndex < GAME_CONSTANTS.LANES.length - 1) {
-                currentLaneIndex++;
-                targetLane = GAME_CONSTANTS.LANES[currentLaneIndex];
-            } else if (dx < 0 && currentLaneIndex > 0) {
-                currentLaneIndex--;
-                targetLane = GAME_CONSTANTS.LANES[currentLaneIndex];
-            }
-        }
-        touchStartX = null;
-        touchStartY = null;
-    });
-}
-
-// --- Pause logic ---
 document.getElementById('pauseBtn').addEventListener('click', function() {
     paused = !paused;
     if (paused) {
         gameRunning = false;
         this.textContent = '▶️';
-        // Optionally pause music
         const bgMusic = document.getElementById('bgMusic');
         if (bgMusic) bgMusic.pause();
     } else {
         gameRunning = true;
         this.textContent = '⏸️';
-        // Optionally resume music
         const bgMusic = document.getElementById('bgMusic');
         if (bgMusic) bgMusic.play();
     }
